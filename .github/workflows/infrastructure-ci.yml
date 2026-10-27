@@ -1,0 +1,45 @@
+name: Level 1 - Infrastructure CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+
+jobs:
+  infrastructure-check:
+    name: Verify CI Runner
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Display runner information
+        run: |
+          echo "GitHub Actions runner is operational."
+          echo "Operating system:"
+          uname -a
+          echo "Git version:"
+          git --version
+          echo "Docker version:"
+          docker --version
+          echo "Docker Compose version:"
+          docker compose version
+
+
+      - name: Verify repository structure
+        run: |
+          echo "Current repository:"
+          pwd
+          echo "Repository contents:"
+          ls -la
+          echo "Commit:"
+          git rev-parse HEAD
+
+
+      - name: Confirm infrastructure CI success
+        run: |
+          echo "Level 1 original CI infrastructure verified."
