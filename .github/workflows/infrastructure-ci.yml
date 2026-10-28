@@ -43,3 +43,41 @@ jobs:
       - name: Confirm infrastructure CI success
         run: |
           echo "Level 1 original CI infrastructure verified."
+
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+
+      - name: Build backend
+        working-directory: ./backend
+        run: npm run build
+
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+
+      - name: Build backend Docker image
+        run: docker build -t minishop-backend:ci ./backend
+
+
+      - name: Build frontend Docker image
+        run: docker build -t minishop-frontend:ci ./frontend
+
+
+      - name: Validate Docker Compose configuration
+        env:
+          POSTGRES_PASSWORD: ci-validation-placeholder
+        run: docker compose config --quiet
+
+
+      - name: Confirm MiniShop CI success
+        run: echo "MiniShop application builds and Docker configuration validated successfully."
