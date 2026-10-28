@@ -1,0 +1,135 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header {
+  background-color: indigo;
+  color: white;
+  text-align: center;
+  padding: 55px 25px;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  letter-spacing: 1px;
+}
+
+.site-header p {
+  margin: 20px 0 0;
+  color: yellow;
+  font-size: 1.05rem;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 55px 30px;
+}
+
+.catalogue-panel {
+  background-color: bisque;
+  border-radius: 16px;
+  padding: 45px;
+  box-shadow: 0 6px 20px rgba(45, 30, 70, 0.08);
+}
+
+.catalogue-panel h2 {
+  color: darkred;
+  text-align: center;
+  font-size: 2rem;
+  margin: 0 0 20px;
+}
+
+.catalogue-description {
+  color: black;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 50px;
+  line-height: 1.9;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(230px, 1fr)
+  );
+  gap: 26px;
+}
+
+.product-card {
+  background-color: #e5e5f5;
+  border: 1.5px solid #c5d5d5;
+  border-radius: 11px;
+  padding: 32px 23px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.product-card h3 {
+  color: orangered;
+  font-size: 1.2rem;
+  margin: 0 0 20px;
+}
+
+.product-card p {
+  color: darkslategrey;
+  line-height: 1.8;
+  margin: 15px 0;
+}
+
+.product-price {
+  color: darkgreen !important;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.product-stock {
+  font-size: 0.9rem;
+}
+
+.error-message {
+  color: crimson;
+  text-align: center;
+}
+
+.site-footer {
+  background-color: mediumvioletred;
+  color: whitesmoke;
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 0.9rem;
+}
+
+.site-footer p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.site-footer p + p {
+  margin-top: 19px;
+}
+
+
+@media (max-width: 600px) {
+  .site-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .main-content {
+    padding: 24px 15px;
+  }
+
+  .catalogue-panel {
+    padding: 24px 18px;
+  }
+
+  .catalogue-panel h2 {
+    font-size: 1.6rem;
+  }
+}
