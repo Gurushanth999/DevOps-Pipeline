@@ -77,15 +77,15 @@ jobs:
         working-directory: ./frontend
         run: npm test
 
-
-
+      
+      
       - name: Build backend Docker image
-        run: docker build -t minishop-backend:ci ./backend
+        run: docker build -t minishop-backend:1.0 ./backend
 
 
 
       - name: Build frontend Docker image
-        run: docker build -t minishop-frontend:ci ./frontend
+        run: docker build -t minishop-frontend:1.0 ./frontend
 
 
 
