@@ -12,6 +12,7 @@ jobs:
     name: Verify CI Runner
     runs-on: ubuntu-24.04
 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.3.1
@@ -30,6 +31,7 @@ jobs:
           docker compose version
 
 
+
       - name: Verify repository structure
         run: |
           echo "Current repository:"
@@ -40,14 +42,11 @@ jobs:
           git rev-parse HEAD
 
 
-      - name: Confirm infrastructure CI success
-        run: |
-          echo "Level 1 original CI infrastructure verified."
-
 
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
+
 
 
       - name: Build backend
@@ -55,9 +54,17 @@ jobs:
         run: npm run build
 
 
+
+      - name: Run backend API smoke tests
+        working-directory: ./backend
+        run: npm test
+
+
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
+
 
 
       - name: Build frontend
@@ -65,12 +72,21 @@ jobs:
         run: npm run build
 
 
+
+      - name: Run frontend production smoke tests
+        working-directory: ./frontend
+        run: npm test
+
+
+
       - name: Build backend Docker image
         run: docker build -t minishop-backend:ci ./backend
 
 
+
       - name: Build frontend Docker image
         run: docker build -t minishop-frontend:ci ./frontend
+
 
 
       - name: Validate Docker Compose configuration
@@ -79,5 +95,56 @@ jobs:
         run: docker compose config --quiet
 
 
+
+      - name: Start isolated PostgreSQL integration database
+        run: |
+          docker compose -f compose.test.yaml \
+            -p minishop-integration-test \
+            up -d --wait database
+
+
+
+      - name: Run PostgreSQL integration tests
+        working-directory: ./backend
+        env:
+          TEST_DATABASE_URL: postgres://minishop:testpassword@127.0.0.1:55432/minishop
+        run: npm run test:integration
+
+
+
+      - name: Stop isolated PostgreSQL integration database
+        if: always()
+        run: |
+          docker compose -f compose.test.yaml \
+            -p minishop-integration-test \
+            down -v --remove-orphans
+
+      
+
+      - name: Start full MiniShop stack
+        env:
+          POSTGRES_PASSWORD: ci-local-test-password
+        run: |
+          docker compose -p minishop-ci up -d --build --wait
+
+
+
+      - name: Run full-stack deployment tests
+        env:
+          TEST_BASE_URL: http://127.0.0.1:8080
+        run: node --test tests/deployment/fullstack.test.cjs
+
+
+
+      - name: Stop full MiniShop stack
+        if: always()
+        env:
+          POSTGRES_PASSWORD: ci-local-test-password
+        run: |
+          docker compose -p minishop-ci down -v --remove-orphans
+
+
+
       - name: Confirm MiniShop CI success
-        run: echo "MiniShop application builds and Docker configuration validated successfully."
+        run: |
+          echo "MiniShop builds, automated tests and Docker configuration validated successfully."

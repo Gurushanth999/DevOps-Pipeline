@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "node --test tests/health.test.cjs",
+    "test:integration": "node --test ../tests/integration/database.test.cjs"
   },
   "keywords": [],
   "author": "",
