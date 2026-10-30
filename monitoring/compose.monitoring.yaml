@@ -1,0 +1,75 @@
+services:
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: minishop-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring
+
+
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.27.0
+    container_name: minishop-blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - ./blackbox/blackbox.yaml:/etc/blackbox_exporter/config.yml:ro
+    networks:
+      - monitoring
+      - minishop-app
+
+
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: minishop-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring
+      - minishop-app
+    depends_on:
+      - node-exporter
+      - blackbox-exporter
+
+
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    container_name: minishop-grafana
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+
+networks:
+  monitoring:
+  minishop-app:
+    external: true
+    name: devops-pipeline_default
+
+
+volumes:
+  prometheus-data:
+  grafana-data:
