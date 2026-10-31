@@ -1,4 +1,4 @@
-name: Level 1 - Infrastructure CI
+name: MiniShop CI/CD Pipeline
 
 on:
   push:
@@ -12,6 +12,12 @@ permissions:
   packages: write
 
 
+concurrency:
+  group: minishop-main-deployment
+  cancel-in-progress: false
+
+
+
 jobs:
   infrastructure-check:
     name: Verify CI Runner
@@ -19,8 +25,10 @@ jobs:
 
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4.3.1
+
 
 
       - name: Display runner information
@@ -169,6 +177,7 @@ jobs:
         env:
           REGISTRY_OWNER: ${{ github.repository_owner }}
           COMMIT_SHA: ${{ github.sha }}
+
         run: |
           OWNER=$(echo "$REGISTRY_OWNER" | tr '[:upper:]' '[:lower:]')
 
@@ -183,3 +192,126 @@ jobs:
 
           echo "Published backend: $BACKEND_IMAGE"
           echo "Published frontend: $FRONTEND_IMAGE"
+
+
+
+  
+  deploy-staging:
+    name: Deploy and verify staging
+    needs: infrastructure-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: staging
+
+
+    steps:
+
+      - name: Configure trusted SSH access
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_HOST_KEY"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+
+
+      - name: Deploy and verify staging
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          REGISTRY_OWNER: ${{ github.repository_owner }}
+          COMMIT_SHA: ${{ github.sha }}
+
+        run: |
+          set -euo pipefail
+          OWNER=$(echo "$REGISTRY_OWNER" | tr '[:upper:]' '[:lower:]')
+
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            bash -se -- "$OWNER" "$COMMIT_SHA" <<'REMOTE'
+          set -euo pipefail
+
+          OWNER="$1"
+          COMMIT_SHA="$2"
+
+          cd ~/DevOps-Pipeline
+          git fetch origin main
+          git checkout --detach "$COMMIT_SHA"
+
+          bash deployment/deploy.sh "$OWNER" "$COMMIT_SHA"
+          REMOTE
+
+
+
+
+
+  deploy-production:
+    name: Promote and verify production
+    needs: deploy-staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+
+
+    steps:
+
+      - name: Configure trusted SSH access
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_HOST_KEY"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+
+
+      - name: Promote published images to production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          REGISTRY_OWNER: ${{ github.repository_owner }}
+          COMMIT_SHA: ${{ github.sha }}
+
+        run: |
+          set -euo pipefail
+          OWNER=$(echo "$REGISTRY_OWNER" | tr '[:upper:]' '[:lower:]')
+
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            bash -se -- "$OWNER" "$COMMIT_SHA" <<'REMOTE'
+          set -euo pipefail
+
+          OWNER="$1"
+          COMMIT_SHA="$2"
+
+          cd ~/DevOps-Pipeline
+          git fetch origin main
+          git checkout --detach "$COMMIT_SHA"
+
+          bash deployment/deploy.sh "$OWNER" "$COMMIT_SHA"
+          REMOTE
