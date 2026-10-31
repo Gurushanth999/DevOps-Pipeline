@@ -7,6 +7,11 @@ on:
   workflow_dispatch:
 
 
+permissions:
+  contents: read
+  packages: write
+
+
 jobs:
   infrastructure-check:
     name: Verify CI Runner
@@ -148,3 +153,33 @@ jobs:
       - name: Confirm MiniShop CI success
         run: |
           echo "MiniShop builds, automated tests and Docker configuration validated successfully."
+
+
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+      - name: Publish versioned backend and frontend images
+        env:
+          REGISTRY_OWNER: ${{ github.repository_owner }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          OWNER=$(echo "$REGISTRY_OWNER" | tr '[:upper:]' '[:lower:]')
+
+          BACKEND_IMAGE="ghcr.io/$OWNER/minishop-backend:$COMMIT_SHA"
+          FRONTEND_IMAGE="ghcr.io/$OWNER/minishop-frontend:$COMMIT_SHA"
+
+          docker tag minishop-backend:1.0 "$BACKEND_IMAGE"
+          docker tag minishop-frontend:1.0 "$FRONTEND_IMAGE"
+
+          docker push "$BACKEND_IMAGE"
+          docker push "$FRONTEND_IMAGE"
+
+          echo "Published backend: $BACKEND_IMAGE"
+          echo "Published frontend: $FRONTEND_IMAGE"
