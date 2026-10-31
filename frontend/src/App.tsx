@@ -55,7 +55,7 @@ function App() {
     <div className="app-container">
 
       <header className="site-header">
-        <h1>MiniShop</h1>
+        <h1>MiniShop | Automated CI/CD Run Test</h1>
         <p>Your go-to online shopping destination.</p>
       </header>
 
