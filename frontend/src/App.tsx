@@ -55,8 +55,9 @@ function App() {
     <div className="app-container">
 
       <header className="site-header">
-        <h1>MiniShop App. | Automated CI/CD Run Re-Test</h1>
-        <p>Your go-to online shopping destination.</p>
+        <h1>MiniShop | Automated CI/CD Run</h1>
+        <p>Test successful delivery, automated deployment through four-level (4 environments) sequence.</p>
+        <p>Visiblity of this line vindicates Development--Testing--Staging--Production pipeline function.</p>
       </header>
 
       <main className="main-content">
